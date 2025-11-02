@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.example.volunteering.ui.theme.VolunteeringTheme
 import com.google.firebase.FirebaseApp
 import androidx.navigation.compose.*
+import com.example.volunteering.ui.screen.CreateEventScreen
 import com.example.volunteering.ui.screen.LoginScreen
 import com.example.volunteering.ui.screen.RegisterScreen
 
@@ -43,7 +44,7 @@ fun VolunteeringApp() {
         composable("home") { HomeScreen(navController) }
         composable("my_events") { /*MyEventsScreen(navController) */}
         composable("view_events") {/* ViewEventsScreen(navController)*/ }
-        composable("create_event") { /*CreateEventScreen(navController)*/ }
+        composable("create_event") { CreateEventScreen(navController) }
 
     }
 }
