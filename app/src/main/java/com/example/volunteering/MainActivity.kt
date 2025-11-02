@@ -1,5 +1,6 @@
 package com.example.volunteering
 
+import HomeScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,7 +40,11 @@ fun VolunteeringApp() {
     NavHost(navController, startDestination = "login") {
         composable("login") { LoginScreen(navController) }
         composable("register") { RegisterScreen(navController) }
-        composable("home") { /* HomeScreen vine după autentificare */ }
+        composable("home") { HomeScreen(navController) }
+        composable("my_events") { /*MyEventsScreen(navController) */}
+        composable("view_events") {/* ViewEventsScreen(navController)*/ }
+        composable("create_event") { /*CreateEventScreen(navController)*/ }
+
     }
 }
 
