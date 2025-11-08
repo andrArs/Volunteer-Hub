@@ -68,7 +68,7 @@ fun HomeScreen(navController: NavHostController) {
             modifier = Modifier
                 .width(220.dp)
                 .height(48.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D47A1)) // albastru închis
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D47A1))
         ) {
             Text("Logout", fontSize = 16.sp, color = Color.White)
         }

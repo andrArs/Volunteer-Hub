@@ -10,5 +10,7 @@ data class Event(
     val location: String = "",
     val imageUrl: String = "",
     val distance: Double? = null,
-    val creatorUid: String = ""
+    val creatorUid: String = "",
+    val interestedUsers: List<String> = emptyList(),
+    val goingUsers: List<String> = emptyList()
 )

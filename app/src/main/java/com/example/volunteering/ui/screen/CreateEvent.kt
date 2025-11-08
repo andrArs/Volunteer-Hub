@@ -176,6 +176,12 @@ fun CreateEventScreen(navController: NavHostController) {
 
 
             if (isValid) {
+                val uid = auth.currentUser?.uid
+                if (uid == null) {
+                    errorMessage = "User not logged in."
+                    return@Button
+                }
+
                 val event = Event(
                     title = title,
                     description = description,
@@ -185,7 +191,7 @@ fun CreateEventScreen(navController: NavHostController) {
                     type = type,
                     location = location,
                     imageUrl = imageUrl,
-                    creatorUid = auth.currentUser?.uid ?: ""
+                    creatorUid = uid
                 )
                 repository.createEvent(event) { success ->
                     if (success) navController.navigate("home")
