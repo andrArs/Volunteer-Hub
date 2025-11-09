@@ -1,6 +1,7 @@
 package com.example.volunteering.data.model
 
 data class Event(
+    val id: String = "",
     val title: String = "",
     val description: String = "",
     val date: String = "",

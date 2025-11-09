@@ -76,6 +76,12 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation(libs.androidx.navigation.runtime.android)
 
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-extended")
+
+
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
