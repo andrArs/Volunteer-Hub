@@ -16,6 +16,7 @@ import com.example.volunteering.ui.theme.VolunteeringTheme
 import com.google.firebase.FirebaseApp
 import androidx.navigation.compose.*
 import com.example.volunteering.ui.screen.CreateEventScreen
+import com.example.volunteering.ui.screen.EditEventScreen
 import com.example.volunteering.ui.screen.EventDetailsScreen
 import com.example.volunteering.ui.screen.LoginScreen
 import com.example.volunteering.ui.screen.MyEventsScreen
@@ -51,6 +52,13 @@ fun VolunteeringApp() {
         composable("event_details/{eventId}") { backStackEntry ->
             val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
             EventDetailsScreen(navController, eventId)
+        }
+        composable("my_profile") { /*MyProfileScreen(navController = navController) */}
+        composable("edit_event/{eventId}") { backStackEntry ->
+            val eventId = backStackEntry.arguments?.getString("eventId")
+            if (eventId != null) {
+                EditEventScreen(navController = navController, eventId = eventId)
+            }
         }
     }
 }

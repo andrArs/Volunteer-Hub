@@ -105,6 +105,8 @@ fun EventDetailsScreen(navController: NavHostController, eventId: String) {
             event != null -> {
                 EventDetailsContent(
                     event = event!!,
+                    navController = navController,
+                    userId = userId,
                     isInterested = isInterested,
                     isGoing = isGoing,
                     onInterestedClick = {
@@ -132,6 +134,8 @@ fun EventDetailsScreen(navController: NavHostController, eventId: String) {
 @Composable
 private fun EventDetailsContent(
     event: Event,
+    navController: NavHostController,
+    userId: String?,
     isInterested: Boolean,
     isGoing: Boolean,
     onInterestedClick: () -> Unit,
@@ -272,6 +276,53 @@ private fun EventDetailsContent(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(if (isGoing) "Going ✓" else "I'm Going")
+                }
+            }
+
+            if (userId != null && userId == event.creatorUid) {
+
+                Spacer(modifier = Modifier.height(24.dp))
+                Divider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Admin Controls",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            navController.navigate("edit_event/${event.id}")
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Edit Event")
+                    }
+
+                    Button(
+                        onClick = {
+                            //to be implemented
+                            },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Delete")
+                    }
                 }
             }
 
