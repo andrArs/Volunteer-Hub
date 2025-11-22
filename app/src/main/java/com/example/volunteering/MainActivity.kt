@@ -20,6 +20,7 @@ import com.example.volunteering.ui.screen.EditEventScreen
 import com.example.volunteering.ui.screen.EventDetailsScreen
 import com.example.volunteering.ui.screen.LoginScreen
 import com.example.volunteering.ui.screen.MyEventsScreen
+import com.example.volunteering.ui.screen.MyProfileScreen
 import com.example.volunteering.ui.screen.RegisterScreen
 import com.example.volunteering.ui.screen.ViewEventsScreen
 
@@ -53,7 +54,7 @@ fun VolunteeringApp() {
             val eventId = backStackEntry.arguments?.getString("eventId") ?: ""
             EventDetailsScreen(navController, eventId)
         }
-        composable("my_profile") { /*MyProfileScreen(navController = navController) */}
+        composable("my_profile") { MyProfileScreen(navController = navController) }
         composable("edit_event/{eventId}") { backStackEntry ->
             val eventId = backStackEntry.arguments?.getString("eventId")
             if (eventId != null) {
