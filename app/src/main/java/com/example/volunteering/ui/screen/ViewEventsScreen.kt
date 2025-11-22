@@ -27,6 +27,8 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
 
 private const val TAG = "ViewEventsScreen"
 
@@ -40,6 +42,8 @@ fun ViewEventsScreen(navController: NavHostController) {
     var showFilterMenu by remember { mutableStateOf(false) }
 
     val filterOptions = listOf("All") + EventTypes.ALL_TYPES
+    var searchQuery by remember { mutableStateOf("") }
+    var allEvents by remember { mutableStateOf<List<Event>>(emptyList()) }
 
     LaunchedEffect(filterType) {
         try {
@@ -86,6 +90,7 @@ fun ViewEventsScreen(navController: NavHostController) {
             } else {
                 mappedEvents
             }
+            allEvents = events
 
             Log.d(TAG, "Successfully loaded ${events.size} events")
             isLoading = false
@@ -94,6 +99,17 @@ fun ViewEventsScreen(navController: NavHostController) {
             Log.e(TAG, "Error loading events", e)
             errorMessage = "Failed to load events: ${e.localizedMessage}"
             isLoading = false
+        }
+    }
+
+    LaunchedEffect(searchQuery) {
+        events = if (searchQuery.isBlank()) {
+            allEvents
+        } else {
+            allEvents.filter { event ->
+                event.title.contains(searchQuery, ignoreCase = true) ||
+                        event.description.contains(searchQuery, ignoreCase = true)
+            }
         }
     }
 
@@ -142,6 +158,27 @@ fun ViewEventsScreen(navController: NavHostController) {
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface
             )
+        )
+
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            placeholder = { Text("Search event...") },
+            leadingIcon = {
+                Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+            },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { searchQuery = "" }) {
+                        Icon(imageVector = Icons.Default.Close, contentDescription = "Clear")
+                    }
+                }
+            },
+            singleLine = true,
+            shape = MaterialTheme.shapes.medium
         )
 
         when {
