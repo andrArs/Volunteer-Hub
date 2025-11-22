@@ -31,6 +31,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.example.volunteering.data.repository.EventRepository
 
 
 private const val TAG = "EventDetailsScreen"
@@ -41,6 +44,7 @@ fun EventDetailsScreen(navController: NavHostController, eventId: String) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val userId = auth.currentUser?.uid
+    val repository = EventRepository()
 
     var event by remember { mutableStateOf<Event?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -49,6 +53,8 @@ fun EventDetailsScreen(navController: NavHostController, eventId: String) {
     var isInterested by remember { mutableStateOf(false) }
     var isGoing by remember { mutableStateOf(false) }
 
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var isDeleting by remember { mutableStateOf(false) }
     LaunchedEffect(eventId) {
         try {
             Log.d(TAG, "Loading event details for: $eventId")
@@ -124,10 +130,56 @@ fun EventDetailsScreen(navController: NavHostController, eventId: String) {
                                 if (success) isGoing = !isGoing
                             }
                         }
+                    },
+                    onDeleteClick = {
+                        showDeleteDialog = true
                     }
                 )
             }
         }
+    }
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Event") },
+            text = { Text("Are you sure you want to delete this event? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isDeleting = true
+                        repository.deleteEvent(eventId) { success ->
+                            isDeleting = false
+                            if (success) {
+                                navController.navigate("my_events") {
+                                    popUpTo("my_events") { inclusive = false }
+                                }
+                            } else {
+                                errorMessage = "Failed to delete event"
+                                showDeleteDialog = false
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    if (isDeleting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = MaterialTheme.colorScheme.onError,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Delete")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -139,7 +191,8 @@ private fun EventDetailsContent(
     isInterested: Boolean,
     isGoing: Boolean,
     onInterestedClick: () -> Unit,
-    onGoingClick: () -> Unit
+    onGoingClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -310,13 +363,11 @@ private fun EventDetailsContent(
                     }
 
                     Button(
-                        onClick = {
-                            //to be implemented
-                            },
+                        onClick = onDeleteClick,
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
                         )
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete")

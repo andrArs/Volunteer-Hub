@@ -38,4 +38,10 @@ class EventRepository {
             .addOnSuccessListener { onResult(true) }
             .addOnFailureListener { onResult(false) }
     }
+
+    fun deleteEvent(eventId: String, onResult: (Boolean) -> Unit) {
+        eventCollection.document(eventId).delete()
+            .addOnSuccessListener { onResult(true) }
+            .addOnFailureListener { onResult(false) }
+    }
 }
