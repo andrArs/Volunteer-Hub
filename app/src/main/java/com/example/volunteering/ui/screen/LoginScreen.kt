@@ -39,7 +39,7 @@ fun LoginScreen(navController: NavController, viewModel: AuthViewModel = viewMod
 
     val error = viewModel.errorMessage.value
 
-    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryColor = Color(0xFF445E91)
     val lightGrayBackground = Color(0xFFF8F9FA)
     Box(
         modifier = Modifier

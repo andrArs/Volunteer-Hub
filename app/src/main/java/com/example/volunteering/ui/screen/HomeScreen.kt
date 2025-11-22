@@ -27,7 +27,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
-    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryColor = Color(0xFF445E91)
     val lightGrayBackground = Color(0xFFF8F9FA)
     val darkBlueLogout = Color(0xFF0D47A1)
     Box(

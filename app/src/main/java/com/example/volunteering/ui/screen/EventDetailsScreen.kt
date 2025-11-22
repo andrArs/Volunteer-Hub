@@ -32,6 +32,7 @@ import kotlinx.coroutines.tasks.await
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
 import com.example.volunteering.data.repository.EventRepository
 
@@ -237,7 +238,7 @@ private fun EventDetailsContent(
 
             Spacer(modifier = Modifier.height(8.dp))
             Surface(
-                color = MaterialTheme.colorScheme.primaryContainer,
+                color = Color(0xFF445E91),
                 shape = MaterialTheme.shapes.small
             ) {
                 Text(
@@ -317,9 +318,9 @@ private fun EventDetailsContent(
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isGoing)
-                            MaterialTheme.colorScheme.primary
+                            Color(0xFF445E91)
                         else
-                            MaterialTheme.colorScheme.secondary
+                            Color(0xFF494C4F)
                     )
                 ) {
                     Icon(
@@ -392,7 +393,7 @@ private fun InfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.primary
+            tint = Color(0xFF445E91)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column {

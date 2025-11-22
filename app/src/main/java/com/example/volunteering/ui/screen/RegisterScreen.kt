@@ -38,7 +38,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
 
     val error = viewModel.errorMessage.value
 
-    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryColor = Color(0xFF445E91)
     val lightGrayBackground = Color(0xFFF8F9FA)
 
 
