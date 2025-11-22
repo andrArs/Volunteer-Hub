@@ -24,6 +24,10 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import com.example.volunteering.data.model.EventTypes
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +45,8 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
     var location by remember { mutableStateOf("") }
     var imageUrl by remember { mutableStateOf("") }
     var creatorUid by remember { mutableStateOf<String?>(null) }
+    var showTypeMenu by remember { mutableStateOf(false) }
+
 
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(true) }
@@ -200,14 +206,51 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
                     }
                 }
 
-                OutlinedTextField(
-                    value = type,
-                    onValueChange = { type = it },
-                    label = { Text("Event Type") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    placeholder = { Text("e.g., Community Service, Education, Environmental") }
-                )
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = type,
+                        onValueChange = {},
+                        label = { Text("Event Type") },
+                        modifier = Modifier.fillMaxWidth(),
+                        readOnly = true,
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { showTypeMenu = !showTypeMenu }) {
+                                Icon(
+                                    imageVector = if (showTypeMenu)
+                                        Icons.Default.ArrowDropUp
+                                    else
+                                        Icons.Default.ArrowDropDown,
+                                    contentDescription = "Select type"
+                                )
+                            }
+                        }
+                    )
+
+                    DropdownMenu(
+                        expanded = showTypeMenu,
+                        onDismissRequest = { showTypeMenu = false },
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .heightIn(max = 300.dp)
+                    ) {
+                        EventTypes.ALL_TYPES.forEach { eventType ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = eventType,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                },
+                                onClick = {
+                                    type = eventType
+                                    showTypeMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
+
 
                 OutlinedTextField(
                     value = location,

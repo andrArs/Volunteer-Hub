@@ -20,10 +20,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.volunteering.data.model.Event
+import com.example.volunteering.data.model.EventTypes
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 private const val TAG = "ViewEventsScreen"
 
@@ -36,7 +39,7 @@ fun ViewEventsScreen(navController: NavHostController) {
     var filterType by remember { mutableStateOf("All") }
     var showFilterMenu by remember { mutableStateOf(false) }
 
-    val filterOptions = listOf("All", "Community Service", "Education", "Environmental", "Health", "Animal Welfare")
+    val filterOptions = listOf("All") + EventTypes.ALL_TYPES
 
     LaunchedEffect(filterType) {
         try {
@@ -45,17 +48,18 @@ fun ViewEventsScreen(navController: NavHostController) {
             errorMessage = null
 
             val firestore = FirebaseFirestore.getInstance()
-            var query: Query = firestore.collection("events")
-                .orderBy("date", Query.Direction.ASCENDING)
-
-            if (filterType != "All") {
-                query = query.whereEqualTo("type", filterType)
+            val query: Query = if (filterType != "All") {
+                firestore.collection("events")
+                    .whereEqualTo("type", filterType)
+            } else {
+                firestore.collection("events")
+                    .orderBy("date", Query.Direction.ASCENDING)
             }
 
             val result = query.get().await()
             Log.d(TAG, "Query successful, documents count: ${result.size()}")
 
-            events = result.documents.mapNotNull { doc ->
+            val mappedEvents = result.documents.mapNotNull { doc ->
                 try {
                     doc.toObject(Event::class.java)?.copy(
                         id = doc.id
@@ -66,6 +70,21 @@ fun ViewEventsScreen(navController: NavHostController) {
                     Log.e(TAG, "Error parsing event document ${doc.id}", e)
                     null
                 }
+            }
+
+            events = if (filterType != "All") {
+                val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+                mappedEvents.sortedWith { event1, event2 ->
+                    try {
+                        val date1 = LocalDate.parse(event1.date, dateFormatter)
+                        val date2 = LocalDate.parse(event2.date, dateFormatter)
+                        date1.compareTo(date2)
+                    } catch (e: Exception) {
+                        0
+                    }
+                }
+            } else {
+                mappedEvents
             }
 
             Log.d(TAG, "Successfully loaded ${events.size} events")
@@ -175,11 +194,7 @@ fun ViewEventsScreen(navController: NavHostController) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(
-                            text = "*",
-                            style = MaterialTheme.typography.displayLarge
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+
                         Text(
                             text = "No events found",
                             style = MaterialTheme.typography.titleLarge

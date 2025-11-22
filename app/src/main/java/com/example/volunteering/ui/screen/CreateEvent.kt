@@ -2,6 +2,7 @@ package com.example.volunteering.ui.screen
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.*
@@ -9,6 +10,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,6 +27,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import com.example.volunteering.data.model.EventTypes
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +43,7 @@ fun CreateEventScreen(navController: NavHostController) {
     var time by remember { mutableStateOf("") }
     var participants by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("") }
+    var showTypeMenu by remember { mutableStateOf(false) }
     var location by remember { mutableStateOf("") }
     var imageUrl by remember { mutableStateOf("") }
 
@@ -158,14 +164,50 @@ fun CreateEventScreen(navController: NavHostController) {
                 }
             }
 
-            OutlinedTextField(
-                value = type,
-                onValueChange = { type = it },
-                label = { Text("Event Type") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                placeholder = { Text("e.g., Community Service, Education, Environmental") }
-            )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = type,
+                    onValueChange = {},
+                    label = { Text("Event Type") },
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    singleLine = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showTypeMenu = !showTypeMenu }) {
+                            Icon(
+                                imageVector = if (showTypeMenu)
+                                    Icons.Default.ArrowDropUp
+                                else
+                                    Icons.Default.ArrowDropDown,
+                                contentDescription = "Select type"
+                            )
+                        }
+                    }
+                )
+
+                DropdownMenu(
+                    expanded = showTypeMenu,
+                    onDismissRequest = { showTypeMenu = false },
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .heightIn(max = 300.dp)
+                ) {
+                    EventTypes.ALL_TYPES.forEach { eventType ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = eventType,
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            },
+                            onClick = {
+                                type = eventType
+                                showTypeMenu = false
+                            }
+                        )
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = location,
