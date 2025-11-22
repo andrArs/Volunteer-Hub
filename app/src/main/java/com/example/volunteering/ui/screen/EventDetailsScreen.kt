@@ -33,6 +33,8 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import com.example.volunteering.R
 import kotlinx.coroutines.launch
 import com.example.volunteering.data.repository.EventRepository
 
@@ -207,8 +209,12 @@ private fun EventDetailsContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(250.dp)
-                    .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)),
-                contentScale = ContentScale.Crop
+                    .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
+                    .background(Color.LightGray),
+                contentScale = ContentScale.Crop,
+                onError = { state ->
+                    Log.e("AsyncImageError", "Error loading image: ${state.result.throwable}")
+                },
             )
         }
 //        else {

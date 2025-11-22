@@ -28,7 +28,17 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import com.example.volunteering.data.model.EventTypes
-
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.google.firebase.storage.FirebaseStorage
+import java.util.UUID
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Add
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,7 +56,24 @@ fun CreateEventScreen(navController: NavHostController) {
     var showTypeMenu by remember { mutableStateOf(false) }
     var location by remember { mutableStateOf("") }
     var imageUrl by remember { mutableStateOf("") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isUploadingImage by remember { mutableStateOf(false) }
 
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+            isUploadingImage = true
+            uploadImageToFirebase(it) { downloadUrl ->
+                imageUrl = downloadUrl ?: ""
+                isUploadingImage = false
+                if (downloadUrl == null) {
+                    var errorMessage = "Failed to upload image"
+                }
+            }
+        }
+    }
     var errorMessage by remember { mutableStateOf("") }
 
     val calendar = Calendar.getInstance()
@@ -226,13 +253,49 @@ fun CreateEventScreen(navController: NavHostController) {
                 placeholder = { Text("Leave empty for unlimited") }
             )
 
-            OutlinedTextField(
-                value = imageUrl,
-                onValueChange = { imageUrl = it },
-                label = { Text("Image URL (Optional)") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            Column(modifier = Modifier.fillMaxWidth()) {
+
+
+                if (selectedImageUri != null) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            AsyncImage(
+                                model = selectedImageUri,
+                                contentDescription = "Selected image",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                            if (isUploadingImage) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black.copy(alpha = 0.5f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(color = Color.White)
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                OutlinedButton(
+                    onClick = { imagePickerLauncher.launch("image/*") },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isUploadingImage,
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (selectedImageUri != null) "Change Image" else "Upload Image")
+                }
+            }
 
             if (errorMessage.isNotEmpty()) {
                 Card(
@@ -253,7 +316,11 @@ fun CreateEventScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
+                // 1. ASTA E CHEIA: Butonul e mort (inactiv) cât timp se încarcă poza
+                enabled = !isUploadingImage,
+
                 onClick = {
+                    // ... (Codul tău de validare rămâne la fel) ...
                     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
                     val today = LocalDate.now()
                     val eventDate = try {
@@ -301,6 +368,7 @@ fun CreateEventScreen(navController: NavHostController) {
                             return@Button
                         }
 
+                        // Aici imageUrl va fi sigur completat pentru că butonul a fost activat doar după upload
                         val event = Event(
                             title = title,
                             description = description,
@@ -309,7 +377,7 @@ fun CreateEventScreen(navController: NavHostController) {
                             participants = participants.toIntOrNull(),
                             type = type,
                             location = location,
-                            imageUrl = imageUrl,
+                            imageUrl = imageUrl, // ACUM ACESTA VA AVEA URL-UL CORECT
                             creatorUid = uid
                         )
                         repository.createEvent(event) { success ->
@@ -322,14 +390,43 @@ fun CreateEventScreen(navController: NavHostController) {
                     .fillMaxWidth()
                     .height(56.dp)
             ) {
-                Text(
-                    text = "Create Event",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                // 2. Modificăm ce scrie pe buton ca să vezi vizual ce se întâmplă
+                if (isUploadingImage) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Wait, uploading image...")
+                } else {
+                    Text(
+                        text = "Create Event",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
+}
+
+fun uploadImageToFirebase(uri: Uri, onComplete: (String?) -> Unit) {
+    val storage = FirebaseStorage.getInstance()
+    val storageRef = storage.reference
+    val imageRef = storageRef.child("event_images/${UUID.randomUUID()}.jpg")
+
+    imageRef.putFile(uri)
+        .addOnSuccessListener {
+            imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
+                onComplete(downloadUri.toString())
+            }.addOnFailureListener {
+                onComplete(null)
+            }
+        }
+        .addOnFailureListener {
+            onComplete(null)
+        }
 }
