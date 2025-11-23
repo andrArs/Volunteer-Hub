@@ -9,6 +9,8 @@ data class Event(
     val participants: Int? = null,
     val type: String = "",
     val location: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val imageUrl: String = "",
     val distance: Double? = null,
     val creatorUid: String = "",

@@ -29,6 +29,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import com.example.volunteering.data.model.EventTypes
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import com.google.firebase.storage.FirebaseStorage
@@ -39,6 +40,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.ui.window.PopupProperties
+import com.example.volunteering.utils.GeocodingService
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +84,13 @@ fun CreateEventScreen(navController: NavHostController) {
     val calendar = Calendar.getInstance()
     val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    var latitude by remember { mutableStateOf<Double?>(null) }
+    var longitude by remember { mutableStateOf<Double?>(null) }
+    var isGeocodingLocation by remember { mutableStateOf(false) }
+
+    val geocodingService = remember { GeocodingService(context) }
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -236,13 +248,106 @@ fun CreateEventScreen(navController: NavHostController) {
                 }
             }
 
-            OutlinedTextField(
-                value = location,
-                onValueChange = { location = it },
-                label = { Text("Location") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
+            var locationSuggestions by remember { mutableStateOf<List<android.location.Address>>(emptyList()) }
+            var showLocationMenu by remember { mutableStateOf(false) }
+
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = { newLocation ->
+                        location = newLocation
+                        if (latitude != null) {
+                            latitude = null
+                            longitude = null
+                        }
+
+                        if (newLocation.length > 2) {
+                            scope.launch {
+                                isGeocodingLocation = true
+                                try {
+                                    val results = geocodingService.getAddressSuggestions(newLocation)
+                                    locationSuggestions = results
+                                    showLocationMenu = results.isNotEmpty()
+                                } catch (e: Exception) {
+                                    Log.e("CreateEvent", "Error fetching suggestions", e)
+                                }
+                                isGeocodingLocation = false
+                            }
+                        } else {
+                            showLocationMenu = false
+                        }
+                    },
+                    label = { Text("Location") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    trailingIcon = {
+                        if (isGeocodingLocation) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else if (latitude != null && longitude != null) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Location confirmed",
+                                tint = Color(0xFF4CAF50)
+                            )
+                        }
+                    }
+                )
+
+                DropdownMenu(
+                    expanded = showLocationMenu,
+                    onDismissRequest = { showLocationMenu = false },
+                    properties = PopupProperties(focusable = false),
+                    modifier = Modifier.fillMaxWidth(0.9f).heightIn(max = 200.dp)
+                ) {
+                    locationSuggestions.forEach { address ->
+                        val addressText = (0..address.maxAddressLineIndex)
+                            .joinToString(", ") { address.getAddressLine(it) }
+
+                        DropdownMenuItem(
+                            text = {
+                                Column {
+                                    Text(
+                                        text = address.featureName ?: addressText.take(20),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = addressText,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.Gray,
+                                        maxLines = 1
+                                    )
+                                }
+                            },
+                            onClick = {
+
+                                val specificName = address.featureName
+                                val fullAddress = addressText
+
+                                val finalLocationText = if (specificName != null && !specificName[0].isDigit()) {
+                                    "$specificName ($fullAddress)"
+                                } else {
+                                    fullAddress
+                                }
+
+                                location = finalLocationText
+
+                                latitude = address.latitude
+                                longitude = address.longitude
+
+                                showLocationMenu = false
+                                isGeocodingLocation = false
+
+                                Log.d("CreateEvent", "Selected: $finalLocationText -> $latitude, $longitude")
+                            }
+                        )
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = participants,
@@ -316,11 +421,9 @@ fun CreateEventScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                // 1. ASTA E CHEIA: Butonul e mort (inactiv) cât timp se încarcă poza
                 enabled = !isUploadingImage,
 
                 onClick = {
-                    // ... (Codul tău de validare rămâne la fel) ...
                     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
                     val today = LocalDate.now()
                     val eventDate = try {
@@ -368,7 +471,6 @@ fun CreateEventScreen(navController: NavHostController) {
                             return@Button
                         }
 
-                        // Aici imageUrl va fi sigur completat pentru că butonul a fost activat doar după upload
                         val event = Event(
                             title = title,
                             description = description,
@@ -377,7 +479,9 @@ fun CreateEventScreen(navController: NavHostController) {
                             participants = participants.toIntOrNull(),
                             type = type,
                             location = location,
-                            imageUrl = imageUrl, // ACUM ACESTA VA AVEA URL-UL CORECT
+                            latitude = latitude,
+                            longitude = longitude,
+                            imageUrl = imageUrl,
                             creatorUid = uid
                         )
                         repository.createEvent(event) { success ->
@@ -390,7 +494,6 @@ fun CreateEventScreen(navController: NavHostController) {
                     .fillMaxWidth()
                     .height(56.dp)
             ) {
-                // 2. Modificăm ce scrie pe buton ca să vezi vizual ce se întâmplă
                 if (isUploadingImage) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp),

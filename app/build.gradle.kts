@@ -81,6 +81,15 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("com.google.firebase:firebase-storage:20.3.0")
 
+    // Google Play Services for Location
+    implementation("com.google.android.gms:play-services-location:21.1.0")
+
+    // permissions
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+
+    // Retrofit for Geocoding API
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
 
     testImplementation(libs.junit)
