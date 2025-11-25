@@ -28,6 +28,10 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import android.Manifest
+import com.example.volunteering.data.model.EventTypes
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 
 private const val TAG = "MyEventsScreen"
 
@@ -90,6 +94,18 @@ fun EventList(navController: NavHostController,filter: String) {
     var events by remember { mutableStateOf<List<Event>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    var searchQuery by remember { mutableStateOf("") }
+
+    var filterType by remember { mutableStateOf("All") }
+    var showFilterMenu by remember { mutableStateOf(false) }
+    val filterOptions = listOf("All") + EventTypes.ALL_TYPES
+
+    var distanceFilter by remember { mutableStateOf("Any") }
+    var showDistanceMenu by remember { mutableStateOf(false) }
+    val distanceOptions = listOf("Any", "< 1 km", "< 3 km", "< 5 km", "< 10 km", "< 20 km", "20+ km")
+
+    var filteredEvents by remember { mutableStateOf<List<Event>>(emptyList()) }
 
     val context = LocalContext.current
     val locationHelper = remember { LocationHelper(context) }
@@ -196,6 +212,36 @@ fun EventList(navController: NavHostController,filter: String) {
         }
     }
 
+    LaunchedEffect(events, searchQuery, filterType, distanceFilter) {
+        var result = events
+
+        if (searchQuery.isNotBlank()) {
+            result = result.filter {
+                it.title.contains(searchQuery, ignoreCase = true) ||
+                        it.description.contains(searchQuery, ignoreCase = true)
+            }
+        }
+        if (filterType != "All") {
+            result = result.filter { it.type == filterType }
+        }
+        if (distanceFilter != "Any") {
+            result = result.filter {
+                val dist = it.distance
+                if (dist == null) false
+                else when (distanceFilter) {
+                    "< 1 km" -> dist < 1.0
+                    "< 3 km" -> dist < 3.0
+                    "< 5 km" -> dist < 5.0
+                    "< 10 km" -> dist < 10.0
+                    "< 20 km" -> dist < 20.0
+                    "20+ km" -> dist >= 20.0
+                    else -> true
+                }
+            }
+        }
+        filteredEvents = result
+    }
+
     when {
         isLoading -> {
             Box(
@@ -248,33 +294,84 @@ fun EventList(navController: NavHostController,filter: String) {
             }
         }
         else -> {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(vertical = 16.dp)
-            ) {
-                item {
-                    Text(
-                        text = "Found ${events.size} event${if (events.size != 1) "s" else ""}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 8.dp)
+            Column(modifier = Modifier.fillMaxSize()) {
+
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            OutlinedButton(
+                                onClick = { showFilterMenu = true },
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Text(if(filterType == "All") "Cat: All" else filterType, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                                Icon(Icons.Default.ArrowDropDown, null)
+                            }
+                            DropdownMenu(expanded = showFilterMenu, onDismissRequest = { showFilterMenu = false }, modifier = Modifier.fillMaxWidth(0.5f)) {
+                                filterOptions.forEach { option ->
+                                    DropdownMenuItem(text = { Text(option) }, onClick = { filterType = option; showFilterMenu = false })
+                                }
+                            }
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            OutlinedButton(
+                                onClick = { showDistanceMenu = true },
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(horizontal = 8.dp)
+                            ) {
+                                Text(if(distanceFilter == "Any") "Dist: Any" else distanceFilter, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                                Icon(Icons.Default.ArrowDropDown, null)
+                            }
+                            DropdownMenu(expanded = showDistanceMenu, onDismissRequest = { showDistanceMenu = false }, modifier = Modifier.fillMaxWidth(0.5f)) {
+                                distanceOptions.forEach { option ->
+                                    DropdownMenuItem(text = { Text(option) }, onClick = { distanceFilter = option; showDistanceMenu = false })
+                                }
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search event...") },
+                        leadingIcon = { Icon(Icons.Default.Search, "Search") },
+                        trailingIcon = { if (searchQuery.isNotEmpty()) IconButton({ searchQuery = "" }) { Icon(Icons.Default.Close, "Clear") } },
+                        singleLine = true
                     )
                 }
 
-                items(
-                    items = events,
-                    key = { event -> event.id }
-                ) { event ->
-                    EventCard(
-                        event = event,
-                        filter = filter,
-                        onClick = {
-                            navController.navigate("event_details/${event.id}")
+                if (filteredEvents.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No events match your search.")
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
+                    ) {
+                        item {
+                            Text(
+                                text = "Found ${filteredEvents.size} event(s)",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
                         }
-                    )
+                        items(items = filteredEvents, key = { it.id }) { event ->
+                            EventCard(
+                                event = event,
+                                filter = filter,
+                                onClick = { navController.navigate("event_details/${event.id}") }
+                            )
+                        }
+                    }
                 }
             }
         }
