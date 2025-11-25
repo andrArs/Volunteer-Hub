@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.ui.window.PopupProperties
 import com.example.volunteering.utils.GeocodingService
 import kotlinx.coroutines.launch
+import androidx.compose.ui.text.style.TextOverflow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -298,51 +299,82 @@ fun CreateEventScreen(navController: NavHostController) {
                     }
                 )
 
+                // Meniul Dropdown "Radical" (Aceeași logică din EditEventScreen)
                 DropdownMenu(
                     expanded = showLocationMenu,
                     onDismissRequest = { showLocationMenu = false },
                     properties = PopupProperties(focusable = false),
-                    modifier = Modifier.fillMaxWidth(0.9f).heightIn(max = 200.dp)
+                    modifier = Modifier.fillMaxWidth(0.9f).heightIn(max = 250.dp)
                 ) {
                     locationSuggestions.forEach { address ->
-                        val addressText = (0..address.maxAddressLineIndex)
+
+                        // 1. Luăm adresa completă
+                        val fullAddress = (0..address.maxAddressLineIndex)
                             .joinToString(", ") { address.getAddressLine(it) }
+
+                        // 2. Verificăm numele dat de Google
+                        val googleFeatureName = address.featureName
+                        val googleHasValidName = googleFeatureName != null &&
+                                !googleFeatureName.matches(Regex("^\\d+$")) &&
+                                !fullAddress.startsWith(googleFeatureName)
+
+                        // 3. Determinăm TITLUL (Bold)
+                        val displayTitle = if (googleHasValidName) {
+                            // Caz fericit: Google știe numele (ex: Shopping City)
+                            googleFeatureName!!
+                        } else {
+                            // Caz "Piața Victoriei": Google nu știe numele.
+                            // FOLOSIM CE AI SCRIS TU! (ex: "Universitatea...")
+                            location.trim().split(" ").joinToString(" ") { word ->
+                                word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                            }
+                        }
+
+                        // 4. Determinăm ADRESA (Normală/Gri)
+                        // Dacă adresa conține titlul, îl scoatem ca să nu se dubleze
+                        val displayAddress = if (fullAddress.contains(displayTitle, ignoreCase = true)) {
+                            fullAddress.replace(displayTitle, "").trim().removePrefix(",").trim()
+                        } else {
+                            fullAddress
+                        }
+                        // Fallback: dacă tăierea a lăsat textul gol, punem orașul
+                        val finalAddress = if (displayAddress.isBlank()) address.locality ?: "Timisoara" else displayAddress
 
                         DropdownMenuItem(
                             text = {
-                                Column {
+                                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                    // A. TITLUL (BOLD)
                                     Text(
-                                        text = address.featureName ?: addressText.take(20),
-                                        fontWeight = FontWeight.Bold
+                                        text = displayTitle,
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
+
+                                    // B. ADRESA (NORMAL)
                                     Text(
-                                        text = addressText,
+                                        text = finalAddress,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color.Gray,
-                                        maxLines = 1
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             },
                             onClick = {
+                                // --- LOGICA DE SALVARE ---
+                                // Salvăm mereu formatul: Titlu (Adresă)
+                                val textToSave = "$displayTitle ($fullAddress)"
 
-                                val specificName = address.featureName
-                                val fullAddress = addressText
-
-                                val finalLocationText = if (specificName != null && !specificName[0].isDigit()) {
-                                    "$specificName ($fullAddress)"
-                                } else {
-                                    fullAddress
-                                }
-
-                                location = finalLocationText
-
+                                location = textToSave
                                 latitude = address.latitude
                                 longitude = address.longitude
 
                                 showLocationMenu = false
                                 isGeocodingLocation = false
 
-                                Log.d("CreateEvent", "Selected: $finalLocationText -> $latitude, $longitude")
+                                Log.d("CreateEvent", "Selected: $textToSave")
                             }
                         )
                     }
@@ -485,7 +517,7 @@ fun CreateEventScreen(navController: NavHostController) {
                             creatorUid = uid
                         )
                         repository.createEvent(event) { success ->
-                            if (success) navController.navigate("home")
+                            if (success) navController.navigate("my_events")
                             else errorMessage = "Failed to create event. Try again."
                         }
                     }

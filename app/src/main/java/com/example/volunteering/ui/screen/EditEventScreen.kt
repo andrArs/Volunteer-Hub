@@ -28,6 +28,8 @@ import com.example.volunteering.data.model.EventTypes
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.LocationOn
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +57,16 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
+    var latitude by remember { mutableStateOf<Double?>(null) }
+    var longitude by remember { mutableStateOf<Double?>(null) }
+
+    var locationSuggestions by remember { mutableStateOf<List<android.location.Address>>(emptyList()) }
+    var showLocationMenu by remember { mutableStateOf(false) }
+    var isGeocodingLocation by remember { mutableStateOf(false) }
+
+    val geocodingService = remember { com.example.volunteering.utils.GeocodingService(context) }
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(eventId) {
         repository.getEventById(eventId) { event ->
             if (event != null) {
@@ -65,6 +77,8 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
                 participants = event.participants?.toString() ?: ""
                 type = event.type
                 location = event.location
+                latitude = event.latitude
+                longitude = event.longitude
                 imageUrl = event.imageUrl
                 creatorUid = event.creatorUid
             } else {
@@ -252,13 +266,91 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
                 }
 
 
-                OutlinedTextField(
-                    value = location,
-                    onValueChange = { location = it },
-                    label = { Text("Location") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
-                )
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = location,
+                        onValueChange = { newLocation ->
+                            location = newLocation
+                            if (latitude != null) {
+                                latitude = null
+                                longitude = null
+                            }
+
+                            if (newLocation.length > 2) {
+                                scope.launch {
+                                    isGeocodingLocation = true
+                                    try {
+                                        val results = geocodingService.getAddressSuggestions(newLocation)
+                                        locationSuggestions = results
+                                        showLocationMenu = results.isNotEmpty()
+                                    } catch (e: Exception) {
+                                        // Log error
+                                    }
+                                    isGeocodingLocation = false
+                                }
+                            } else {
+                                showLocationMenu = false
+                            }
+                        },
+                        label = { Text("Location") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        trailingIcon = {
+                            if (isGeocodingLocation) {
+                                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            } else if (latitude != null && longitude != null) {
+                                Icon(Icons.Default.LocationOn, "Location confirmed", tint = androidx.compose.ui.graphics.Color(0xFF4CAF50))
+                            }
+                        }
+                    )
+
+                    DropdownMenu(
+                        expanded = showLocationMenu,
+                        onDismissRequest = { showLocationMenu = false },
+                        properties = androidx.compose.ui.window.PopupProperties(focusable = false),
+                        modifier = Modifier.fillMaxWidth(0.9f).heightIn(max = 250.dp)
+                    ) {
+                        locationSuggestions.forEach { address ->
+                            val fullAddress = (0..address.maxAddressLineIndex).joinToString(", ") { address.getAddressLine(it) }
+                            val googleFeatureName = address.featureName
+                            val googleHasValidName = googleFeatureName != null && !googleFeatureName.matches(Regex("^\\d+$")) && !fullAddress.startsWith(googleFeatureName)
+
+                            val displayTitle = if (googleHasValidName) {
+                                googleFeatureName!!
+                            } else {
+                                location.trim().split(" ").joinToString(" ") { word ->
+                                    word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                                }
+                            }
+
+                            val displayAddress = if (fullAddress.contains(displayTitle, ignoreCase = true)) {
+                                fullAddress.replace(displayTitle, "").trim().removePrefix(",").trim()
+                            } else {
+                                fullAddress
+                            }
+                            val finalAddress = if (displayAddress.isBlank()) address.locality ?: "Timisoara" else displayAddress
+
+                            DropdownMenuItem(
+                                text = {
+                                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                        Text(text = displayTitle, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                        Text(text = finalAddress, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                    }
+                                },
+                                onClick = {
+                                    val textToSave = "$displayTitle ($fullAddress)"
+                                    location = textToSave
+                                    latitude = address.latitude
+                                    longitude = address.longitude
+                                    showLocationMenu = false
+                                    isGeocodingLocation = false
+                                }
+                            )
+                        }
+                    }
+                }
 
                 OutlinedTextField(
                     value = participants,
@@ -359,6 +451,8 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
                                 participants = participants.toIntOrNull(),
                                 type = type,
                                 location = location,
+                                latitude = latitude,
+                                longitude = longitude,
                                 imageUrl = imageUrl,
                                 creatorUid = creatorUid!!
                             )

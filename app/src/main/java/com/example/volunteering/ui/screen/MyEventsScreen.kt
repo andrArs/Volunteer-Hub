@@ -1,6 +1,8 @@
 package com.example.volunteering.ui.screen
 
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,14 +16,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.volunteering.data.model.Event
+import com.example.volunteering.utils.LocationHelper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import android.Manifest
 
 private const val TAG = "MyEventsScreen"
 
@@ -85,6 +91,37 @@ fun EventList(navController: NavHostController,filter: String) {
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
+    val context = LocalContext.current
+    val locationHelper = remember { LocationHelper(context) }
+    val scope = rememberCoroutineScope()
+    var userLocation by remember { mutableStateOf<android.location.Location?>(null) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val isGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+        if (isGranted) {
+            scope.launch {
+                userLocation = locationHelper.getCurrentLocation()
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (!locationHelper.hasLocationPermission()) {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        } else {
+            userLocation = locationHelper.getCurrentLocation()
+        }
+    }
+
     if (userId == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("User not logged in")
@@ -124,19 +161,10 @@ fun EventList(navController: NavHostController,filter: String) {
             val result = query.get().await()
             Log.d(TAG, "Query successful, documents count: ${result.size()}")
 
-            events = result.documents.mapNotNull { doc ->
-                try {
-                    doc.toObject(Event::class.java)?.copy(
-                        id = doc.id
-                    )?.also {
-                        Log.d(TAG, "Loaded event: ${it.title}")
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error parsing event document ${doc.id}", e)
-                    null
-                }
+            val loadedEvents = result.documents.mapNotNull { doc ->
+                doc.toObject(Event::class.java)?.copy(id = doc.id)
             }
-
+            events = loadedEvents
             Log.d(TAG, "Successfully loaded ${events.size} events")
             isLoading = false
 
@@ -144,6 +172,27 @@ fun EventList(navController: NavHostController,filter: String) {
             Log.e(TAG, "Error loading events for filter: $filter", e)
             errorMessage = "Failed to load events: ${e.localizedMessage}"
             isLoading = false
+        }
+    }
+
+    LaunchedEffect(userLocation, events) {
+        if (userLocation != null && events.isNotEmpty()) {
+            val updatedEvents = events.map { event ->
+                if (event.latitude != null && event.longitude != null) {
+                    val dist = locationHelper.calculateDistance(
+                        userLocation!!.latitude,
+                        userLocation!!.longitude,
+                        event.latitude,
+                        event.longitude
+                    )
+                    event.copy(distance = dist)
+                } else {
+                    event
+                }
+            }
+            if (updatedEvents != events) {
+                events = updatedEvents
+            }
         }
     }
 
@@ -235,6 +284,7 @@ fun EventList(navController: NavHostController,filter: String) {
 @Composable
 private fun EventCard(event: Event,filter: String,
                       onClick: () -> Unit) {
+    val locationHelper = LocationHelper(LocalContext.current)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -318,13 +368,47 @@ private fun EventCard(event: Event,filter: String,
                     tint = Color(0xFF445E91)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(
-                    text = event.location,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    val locationText = event.location
+
+                    if (locationText.contains("(") && locationText.endsWith(")")) {
+                        val parts = locationText.split(" (", limit = 2)
+                        val placeName = parts[0]
+                        val address = parts[1].removeSuffix(")")
+
+                        Text(
+                            text = placeName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = address,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    } else {
+                        Text(
+                            text = locationText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    event.distance?.let { distance ->
+                        Text(
+                            text = locationHelper.formatDistance(distance),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF445E91),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
             }
         }
     }

@@ -58,6 +58,16 @@ fun EventDetailsScreen(navController: NavHostController, eventId: String) {
 
     var showDeleteDialog by remember { mutableStateOf(false) }
     var isDeleting by remember { mutableStateOf(false) }
+
+    val locationHelper = remember { com.example.volunteering.utils.LocationHelper(context) }
+    var userLocation by remember { mutableStateOf<android.location.Location?>(null) }
+    var distanceText by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        if (locationHelper.hasLocationPermission()) {
+            userLocation = locationHelper.getCurrentLocation()
+        }
+    }
     LaunchedEffect(eventId) {
         try {
             Log.d(TAG, "Loading event details for: $eventId")
@@ -82,6 +92,18 @@ fun EventDetailsScreen(navController: NavHostController, eventId: String) {
             Log.e(TAG, "Error loading event", e)
             errorMessage = "Failed to load event: ${e.localizedMessage}"
             isLoading = false
+        }
+    }
+
+    LaunchedEffect(event, userLocation) {
+        if (event != null && userLocation != null && event!!.latitude != null && event!!.longitude != null) {
+            val dist = locationHelper.calculateDistance(
+                userLocation!!.latitude,
+                userLocation!!.longitude,
+                event!!.latitude!!,
+                event!!.longitude!!
+            )
+            distanceText = locationHelper.formatDistance(dist)
         }
     }
 
@@ -118,6 +140,7 @@ fun EventDetailsScreen(navController: NavHostController, eventId: String) {
                     userId = userId,
                     isInterested = isInterested,
                     isGoing = isGoing,
+                    distanceText = distanceText,
                     onInterestedClick = {
                         if (userId != null) {
                             vibratePhone(context)
@@ -193,6 +216,7 @@ private fun EventDetailsContent(
     userId: String?,
     isInterested: Boolean,
     isGoing: Boolean,
+    distanceText: String?,
     onInterestedClick: () -> Unit,
     onGoingClick: () -> Unit,
     onDeleteClick: () -> Unit
@@ -279,11 +303,59 @@ private fun EventDetailsContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            InfoRow(
-                icon = Icons.Default.LocationOn,
-                label = "Location",
-                value = event.location
-            )
+            Row(
+                verticalAlignment = Alignment.Top,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = Color(0xFF445E91)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "Location",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    val locationText = event.location
+
+                    if (locationText.contains("(") && locationText.endsWith(")")) {
+                        val parts = locationText.split(" (", limit = 2)
+                        val placeName = parts[0]
+                        val address = parts[1].removeSuffix(")")
+
+                        Text(
+                            text = placeName,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = address,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    } else {
+                        Text(
+                            text = locationText,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    if (distanceText != null) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = distanceText!!,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF445E91),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
 
             event.participants?.let { max ->
                 Spacer(modifier = Modifier.height(12.dp))
@@ -434,7 +506,6 @@ private fun vibratePhone(context: Context) {
     }
 }
 
-// Firebase update functions
 private fun toggleInterested(eventId: String, userId: String, add: Boolean, onResult: (Boolean) -> Unit) {
     val firestore = FirebaseFirestore.getInstance()
     val eventRef = firestore.collection("events").document(eventId)
