@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
@@ -49,6 +50,10 @@ fun ViewEventsScreen(navController: NavHostController) {
     var searchQuery by remember { mutableStateOf("") }
 
     val filterOptions = listOf("All") + EventTypes.ALL_TYPES
+
+    var distanceFilter by remember { mutableStateOf("Any") }
+    var showDistanceMenu by remember { mutableStateOf(false) }
+    val distanceOptions = listOf("Any", "< 1 km", "< 3 km", "< 5 km", "< 10 km", "< 20 km", "20+ km")
 
     val context = LocalContext.current
     val locationHelper = remember { LocationHelper(context) }
@@ -169,64 +174,117 @@ fun ViewEventsScreen(navController: NavHostController) {
         }
     }
 
-    LaunchedEffect(searchQuery) {
-        events = if (searchQuery.isBlank()) {
-            allEvents
-        } else {
-            allEvents.filter { event ->
+     LaunchedEffect(searchQuery, distanceFilter, allEvents) {
+        var filteredList = allEvents
+
+        if (searchQuery.isNotBlank()) {
+            filteredList = filteredList.filter { event ->
                 event.title.contains(searchQuery, ignoreCase = true) ||
                         event.description.contains(searchQuery, ignoreCase = true)
             }
         }
+
+        if (distanceFilter != "Any") {
+            filteredList = filteredList.filter { event ->
+                val dist = event.distance
+                if (dist == null) false
+                else when (distanceFilter) {
+                    "< 1 km" -> dist < 1.0
+                    "< 3 km" -> dist < 3.0
+                    "< 5 km" -> dist < 5.0
+                    "< 10 km" -> dist < 10.0
+                    "< 20 km" -> dist < 20.0
+                    "20+ km" -> dist >= 20.0
+                    else -> true
+                }
+            }
+        }
+
+        events = filteredList
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = {
-                Text(
-                    text = "All Events",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            },
+            title = { Text("All Events", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold) },
             navigationIcon = {
-                IconButton(onClick = {
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = false }
-                    }
-                }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back to Home"
-                    )
+                IconButton(onClick = { navController.navigate("home") { popUpTo("home") { inclusive = false } } }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                 }
             },
-            actions = {
-                Box {
-                    TextButton(onClick = { showFilterMenu = true }) {
-                        Text("Category: $filterType")
-                    }
-                    DropdownMenu(
-                        expanded = showFilterMenu,
-                        onDismissRequest = { showFilterMenu = false }
-                    ) {
-                        filterOptions.forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(option) },
-                                onClick = {
-                                    filterType = option
-                                    showFilterMenu = false
-                                }
-                            )
-                        }
-                    }
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
         )
 
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            Box(modifier = Modifier.weight(1f)) {
+                OutlinedButton(
+                    onClick = { showFilterMenu = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = if (filterType == "All") "Category: All" else filterType,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Icon(Icons.Default.ArrowDropDown, null)
+                }
+
+                DropdownMenu(
+                    expanded = showFilterMenu,
+                    onDismissRequest = { showFilterMenu = false },
+                    modifier = Modifier.fillMaxWidth(0.5f)
+                ) {
+                    filterOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = { filterType = option; showFilterMenu = false }
+                        )
+                    }
+                }
+            }
+
+            Box(modifier = Modifier.weight(1f)) {
+                OutlinedButton(
+                    onClick = { showDistanceMenu = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = if (distanceFilter == "Any") "Distance: Any" else distanceFilter,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Icon(Icons.Default.ArrowDropDown, null)
+                }
+
+                DropdownMenu(
+                    expanded = showDistanceMenu,
+                    onDismissRequest = { showDistanceMenu = false },
+                    modifier = Modifier.fillMaxWidth(0.5f)
+                ) {
+                    distanceOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = { distanceFilter = option; showDistanceMenu = false }
+                        )
+                    }
+                }
+            }
+        }
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
