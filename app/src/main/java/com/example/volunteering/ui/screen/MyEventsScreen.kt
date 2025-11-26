@@ -38,7 +38,7 @@ private const val TAG = "MyEventsScreen"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyEventsScreen(navController: NavHostController) {
-    val tabs = listOf("Interested", "Going", "Created")
+    val tabs = listOf("Interested", "Going", "Created", "History")
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Column(
@@ -83,6 +83,7 @@ fun MyEventsScreen(navController: NavHostController) {
             0 -> EventList(navController = navController,filter = "interested")
             1 -> EventList(navController = navController,filter = "going")
             2 -> EventList(navController = navController,filter = "created")
+            3 -> EventList(navController = navController,filter = "history")
         }
     }
 }
@@ -158,7 +159,7 @@ fun EventList(navController: NavHostController,filter: String) {
                     firestore.collection("events")
                         .whereArrayContains("interestedUsers", userId)
                 }
-                "going" -> {
+                "going", "history" -> {
                     Log.d(TAG, "Querying going events")
                     firestore.collection("events")
                         .whereArrayContains("goingUsers", userId)
@@ -180,20 +181,30 @@ fun EventList(navController: NavHostController,filter: String) {
             val loadedEvents = result.documents.mapNotNull { doc ->
                 doc.toObject(Event::class.java)?.copy(id = doc.id)
             }
-            val finalEvents = if (filter == "interested" || filter == "going") {
-                val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")
-                val today = java.time.LocalDate.now()
 
-                loadedEvents.filter { event ->
-                    try {
-                        val eventDate = java.time.LocalDate.parse(event.date, dateFormatter)
-                        !eventDate.isBefore(today)
-                    } catch (e: Exception) {
-                        true
+            val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")
+            val today = java.time.LocalDate.now()
+
+            val finalEvents = when (filter) {
+                "interested", "going" -> {
+                    loadedEvents.filter { event ->
+                        try {
+                            val eventDate = java.time.LocalDate.parse(event.date, dateFormatter)
+                            !eventDate.isBefore(today)
+                        } catch (e: Exception) { true }
                     }
                 }
-            } else {
-                loadedEvents
+                "history" -> {
+                    loadedEvents.filter { event ->
+                        try {
+                            val eventDate = java.time.LocalDate.parse(event.date, dateFormatter)
+                            eventDate.isBefore(today)
+                        } catch (e: Exception) { false }
+                    }
+                }
+                else -> {
+                    loadedEvents
+                }
             }
 
             events = finalEvents
