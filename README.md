@@ -16,7 +16,7 @@ A modern native Android app that connects volunteers with community events. It f
 
 **Profile & Stats**: Track your impact with attendance statistics and countdown reminders for upcoming events.
 
-**Used technologies**
+**Technologies Used**
 
 **Language**: Kotlin
 
