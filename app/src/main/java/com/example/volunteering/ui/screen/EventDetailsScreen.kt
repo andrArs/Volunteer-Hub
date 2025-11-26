@@ -367,53 +367,53 @@ private fun EventDetailsContent(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+            val isCreator = userId != null && userId == event.creatorUid
+            if (!isCreator) {
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = onInterestedClick,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (isInterested)
-                            MaterialTheme.colorScheme.secondaryContainer
-                        else
-                            MaterialTheme.colorScheme.surface
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(
-                        imageVector = if (isInterested) Icons.Default.Star else Icons.Default.StarBorder,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isInterested) "Interested ✓" else "Interested")
-                }
+                    OutlinedButton(
+                        onClick = onInterestedClick,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (isInterested)
+                                MaterialTheme.colorScheme.secondaryContainer
+                            else
+                                MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (isInterested) Icons.Default.Star else Icons.Default.StarBorder,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isInterested) "Interested ✓" else "Interested")
+                    }
 
-                Button(
-                    onClick = onGoingClick,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isGoing)
-                            Color(0xFF445E91)
-                        else
-                            Color(0xFF494C4F)
-                    )
-                ) {
-                    Icon(
-                        imageVector = if (isGoing) Icons.Default.Check else Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (isGoing) "Going ✓" else "I'm Going")
+                    Button(
+                        onClick = onGoingClick,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (isGoing)
+                                Color(0xFF445E91)
+                            else
+                                Color(0xFF494C4F)
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (isGoing) Icons.Default.Check else Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isGoing) "Going ✓" else "I'm Going")
+                    }
                 }
             }
-
-            if (userId != null && userId == event.creatorUid) {
-
-                Spacer(modifier = Modifier.height(24.dp))
+            else{
                 Divider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -425,7 +425,6 @@ private fun EventDetailsContent(
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
