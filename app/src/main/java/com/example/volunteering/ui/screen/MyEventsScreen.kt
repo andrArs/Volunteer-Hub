@@ -207,7 +207,17 @@ fun EventList(navController: NavHostController,filter: String) {
                 }
             }
 
-            events = finalEvents
+            val sortedEvents = finalEvents.sortedWith { e1, e2 ->
+                try {
+                    val d1 = java.time.LocalDate.parse(e1.date, dateFormatter)
+                    val d2 = java.time.LocalDate.parse(e2.date, dateFormatter)
+                    d1.compareTo(d2)
+                } catch (e: Exception) {
+                    0
+                }
+            }
+
+            events = sortedEvents
 
             Log.d(TAG, "Successfully loaded ${events.size} events")
             isLoading = false
