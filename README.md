@@ -1,8 +1,10 @@
 **Volunteer Hub**
+
 A modern native Android app that connects volunteers with community events. It focuses on real-time location services to help users find opportunities nearby.
 
 **Key Features**
-**Location & GPS**: Automatically calculates the distance to events (e.g., "2.5 km away") and uses a smart geocoding system for accurate address selection.
+
+**Location & GPS**: Automatically calculates the distance to events and uses a smart geocoding system for accurate address selection.
 
 **Advanced Filtering**: Filter events by category, distance, and search text simultaneously.
 
@@ -15,6 +17,7 @@ A modern native Android app that connects volunteers with community events. It f
 **Profile & Stats**: Track your impact with attendance statistics and countdown reminders for upcoming events.
 
 **Used technologies**
+
 **Language**: Kotlin
 
 **UI**: Jetpack Compose (Material 3)
