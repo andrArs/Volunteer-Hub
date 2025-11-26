@@ -180,7 +180,24 @@ fun EventList(navController: NavHostController,filter: String) {
             val loadedEvents = result.documents.mapNotNull { doc ->
                 doc.toObject(Event::class.java)?.copy(id = doc.id)
             }
-            events = loadedEvents
+            val finalEvents = if (filter == "interested" || filter == "going") {
+                val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")
+                val today = java.time.LocalDate.now()
+
+                loadedEvents.filter { event ->
+                    try {
+                        val eventDate = java.time.LocalDate.parse(event.date, dateFormatter)
+                        !eventDate.isBefore(today)
+                    } catch (e: Exception) {
+                        true
+                    }
+                }
+            } else {
+                loadedEvents
+            }
+
+            events = finalEvents
+
             Log.d(TAG, "Successfully loaded ${events.size} events")
             isLoading = false
 

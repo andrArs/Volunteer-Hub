@@ -116,9 +116,20 @@ fun ViewEventsScreen(navController: NavHostController) {
                 }
             }
 
+            val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+            val today = LocalDate.now()
+
+            val currentEvents = mappedEvents.filter { event ->
+                try {
+                    val eventDate = LocalDate.parse(event.date, dateFormatter)
+                    !eventDate.isBefore(today)
+                } catch (e: Exception) {
+                    true
+                }
+            }
+
             val sortedEvents = if (filterType != "All") {
-                val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
-                mappedEvents.sortedWith { event1, event2 ->
+                currentEvents.sortedWith { event1, event2 ->
                     try {
                         val date1 = LocalDate.parse(event1.date, dateFormatter)
                         val date2 = LocalDate.parse(event2.date, dateFormatter)
@@ -126,7 +137,7 @@ fun ViewEventsScreen(navController: NavHostController) {
                     } catch (e: Exception) { 0 }
                 }
             } else {
-                mappedEvents
+               currentEvents
             }
 
             allEvents = sortedEvents
