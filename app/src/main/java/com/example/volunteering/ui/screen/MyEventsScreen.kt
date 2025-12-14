@@ -65,16 +65,26 @@ fun MyEventsScreen(navController: NavHostController) {
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = MaterialTheme.colorScheme.primary,
+                titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
             )
         )
 
-        TabRow(selectedTabIndex = selectedTab) {
+        TabRow(selectedTabIndex = selectedTab,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary) {
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTab == index,
                     onClick = { selectedTab = index },
-                    text = { Text(title) }
+                    text = { Text(
+                        title,
+                        color = if (selectedTab == index)
+                            MaterialTheme.colorScheme.primary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    ) }
                 )
             }
         }
@@ -290,9 +300,10 @@ fun EventList(navController: NavHostController,filter: String) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Loading events...")
+                    Text("Loading events...",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }            }
         }
         errorMessage != null -> {
@@ -328,7 +339,8 @@ fun EventList(navController: NavHostController,filter: String) {
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No events found for this category.")
+                Text("No events found for this category.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
         else -> {

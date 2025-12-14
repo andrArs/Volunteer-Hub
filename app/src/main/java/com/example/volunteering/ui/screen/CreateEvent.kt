@@ -45,6 +45,7 @@ import androidx.compose.ui.window.PopupProperties
 import com.example.volunteering.utils.GeocodingService
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.volunteering.ui.theme.SuccessGreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,25 +62,25 @@ fun CreateEventScreen(navController: NavHostController) {
     var type by remember { mutableStateOf("") }
     var showTypeMenu by remember { mutableStateOf(false) }
     var location by remember { mutableStateOf("") }
-    var imageUrl by remember { mutableStateOf("") }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var isUploadingImage by remember { mutableStateOf(false) }
+//    var imageUrl by remember { mutableStateOf("") }
+//    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+//    var isUploadingImage by remember { mutableStateOf(false) }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            selectedImageUri = it
-            isUploadingImage = true
-            uploadImageToFirebase(it) { downloadUrl ->
-                imageUrl = downloadUrl ?: ""
-                isUploadingImage = false
-                if (downloadUrl == null) {
-                    var errorMessage = "Failed to upload image"
-                }
-            }
-        }
-    }
+//    val imagePickerLauncher = rememberLauncherForActivityResult(
+//        contract = ActivityResultContracts.GetContent()
+//    ) { uri: Uri? ->
+//        uri?.let {
+//            selectedImageUri = it
+//            isUploadingImage = true
+//            uploadImageToFirebase(it) { downloadUrl ->
+//                imageUrl = downloadUrl ?: ""
+//                isUploadingImage = false
+//                if (downloadUrl == null) {
+//                    var errorMessage = "Failed to upload image"
+//                }
+//            }
+//        }
+//    }
     var errorMessage by remember { mutableStateOf("") }
 
     val calendar = Calendar.getInstance()
@@ -117,7 +118,9 @@ fun CreateEventScreen(navController: NavHostController) {
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface
+                containerColor = MaterialTheme.colorScheme.primary,
+                titleContentColor = Color.White,
+                navigationIconContentColor = Color.White
             )
         )
 
@@ -293,13 +296,12 @@ fun CreateEventScreen(navController: NavHostController) {
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = "Location confirmed",
-                                tint = Color(0xFF4CAF50)
+                                tint = SuccessGreen
                             )
                         }
                     }
                 )
 
-                // Meniul Dropdown "Radical" (Aceeași logică din EditEventScreen)
                 DropdownMenu(
                     expanded = showLocationMenu,
                     onDismissRequest = { showLocationMenu = false },
@@ -308,42 +310,32 @@ fun CreateEventScreen(navController: NavHostController) {
                 ) {
                     locationSuggestions.forEach { address ->
 
-                        // 1. Luăm adresa completă
                         val fullAddress = (0..address.maxAddressLineIndex)
                             .joinToString(", ") { address.getAddressLine(it) }
 
-                        // 2. Verificăm numele dat de Google
                         val googleFeatureName = address.featureName
                         val googleHasValidName = googleFeatureName != null &&
                                 !googleFeatureName.matches(Regex("^\\d+$")) &&
                                 !fullAddress.startsWith(googleFeatureName)
 
-                        // 3. Determinăm TITLUL (Bold)
                         val displayTitle = if (googleHasValidName) {
-                            // Caz fericit: Google știe numele (ex: Shopping City)
                             googleFeatureName!!
                         } else {
-                            // Caz "Piața Victoriei": Google nu știe numele.
-                            // FOLOSIM CE AI SCRIS TU! (ex: "Universitatea...")
                             location.trim().split(" ").joinToString(" ") { word ->
                                 word.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
                             }
                         }
 
-                        // 4. Determinăm ADRESA (Normală/Gri)
-                        // Dacă adresa conține titlul, îl scoatem ca să nu se dubleze
                         val displayAddress = if (fullAddress.contains(displayTitle, ignoreCase = true)) {
                             fullAddress.replace(displayTitle, "").trim().removePrefix(",").trim()
                         } else {
                             fullAddress
                         }
-                        // Fallback: dacă tăierea a lăsat textul gol, punem orașul
                         val finalAddress = if (displayAddress.isBlank()) address.locality ?: "Timisoara" else displayAddress
 
                         DropdownMenuItem(
                             text = {
                                 Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                                    // A. TITLUL (BOLD)
                                     Text(
                                         text = displayTitle,
                                         fontWeight = FontWeight.Bold,
@@ -352,7 +344,6 @@ fun CreateEventScreen(navController: NavHostController) {
                                         overflow = TextOverflow.Ellipsis
                                     )
 
-                                    // B. ADRESA (NORMAL)
                                     Text(
                                         text = finalAddress,
                                         style = MaterialTheme.typography.bodySmall,
@@ -363,8 +354,6 @@ fun CreateEventScreen(navController: NavHostController) {
                                 }
                             },
                             onClick = {
-                                // --- LOGICA DE SALVARE ---
-                                // Salvăm mereu formatul: Titlu (Adresă)
                                 val textToSave = "$displayTitle ($fullAddress)"
 
                                 location = textToSave
@@ -390,49 +379,49 @@ fun CreateEventScreen(navController: NavHostController) {
                 placeholder = { Text("Leave empty for unlimited") }
             )
 
-            Column(modifier = Modifier.fillMaxWidth()) {
-
-
-                if (selectedImageUri != null) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            AsyncImage(
-                                model = selectedImageUri,
-                                contentDescription = "Selected image",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                            if (isUploadingImage) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(Color.Black.copy(alpha = 0.5f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    CircularProgressIndicator(color = Color.White)
-                                }
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                OutlinedButton(
-                    onClick = { imagePickerLauncher.launch("image/*") },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = !isUploadingImage,
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (selectedImageUri != null) "Change Image" else "Upload Image")
-                }
-            }
+//            Column(modifier = Modifier.fillMaxWidth()) {
+//
+//
+//                if (selectedImageUri != null) {
+//                    Card(
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(200.dp),
+//                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+//                    ) {
+//                        Box(modifier = Modifier.fillMaxSize()) {
+//                            AsyncImage(
+//                                model = selectedImageUri,
+//                                contentDescription = "Selected image",
+//                                modifier = Modifier.fillMaxSize(),
+//                                contentScale = ContentScale.Crop
+//                            )
+//                            if (isUploadingImage) {
+//                                Box(
+//                                    modifier = Modifier
+//                                        .fillMaxSize()
+//                                        .background(Color.Black.copy(alpha = 0.5f)),
+//                                    contentAlignment = Alignment.Center
+//                                ) {
+//                                    CircularProgressIndicator(color = Color.White)
+//                                }
+//                            }
+//                        }
+//                    }
+//                    Spacer(modifier = Modifier.height(8.dp))
+//                }
+//
+//                OutlinedButton(
+//                    onClick = { imagePickerLauncher.launch("image/*") },
+//                    modifier = Modifier.fillMaxWidth(),
+//                    enabled = !isUploadingImage,
+//                    shape = RoundedCornerShape(4.dp)
+//                ) {
+//                    Icon(Icons.Default.Add, contentDescription = null)
+//                    Spacer(modifier = Modifier.width(8.dp))
+//                    Text(if (selectedImageUri != null) "Change Image" else "Upload Image")
+//                }
+//            }
 
             if (errorMessage.isNotEmpty()) {
                 Card(
@@ -453,7 +442,7 @@ fun CreateEventScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                enabled = !isUploadingImage,
+                enabled = true,
 
                 onClick = {
                     val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
@@ -513,7 +502,7 @@ fun CreateEventScreen(navController: NavHostController) {
                             location = location,
                             latitude = latitude,
                             longitude = longitude,
-                            imageUrl = imageUrl,
+//                            imageUrl = imageUrl,
                             creatorUid = uid
                         )
                         repository.createEvent(event) { success ->
@@ -526,21 +515,21 @@ fun CreateEventScreen(navController: NavHostController) {
                     .fillMaxWidth()
                     .height(56.dp)
             ) {
-                if (isUploadingImage) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        strokeWidth = 2.dp
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Wait, uploading image...")
-                } else {
+//                if (isUploadingImage) {
+//                    CircularProgressIndicator(
+//                        modifier = Modifier.size(24.dp),
+//                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+//                        strokeWidth = 2.dp
+//                    )
+//                    Spacer(modifier = Modifier.width(8.dp))
+//                    Text("Wait, uploading image...")
+//                } else {  }
                     Text(
                         text = "Create Event",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                }
+
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -548,20 +537,20 @@ fun CreateEventScreen(navController: NavHostController) {
     }
 }
 
-fun uploadImageToFirebase(uri: Uri, onComplete: (String?) -> Unit) {
-    val storage = FirebaseStorage.getInstance()
-    val storageRef = storage.reference
-    val imageRef = storageRef.child("event_images/${UUID.randomUUID()}.jpg")
-
-    imageRef.putFile(uri)
-        .addOnSuccessListener {
-            imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-                onComplete(downloadUri.toString())
-            }.addOnFailureListener {
-                onComplete(null)
-            }
-        }
-        .addOnFailureListener {
-            onComplete(null)
-        }
-}
+//fun uploadImageToFirebase(uri: Uri, onComplete: (String?) -> Unit) {
+//    val storage = FirebaseStorage.getInstance()
+//    val storageRef = storage.reference
+//    val imageRef = storageRef.child("event_images/${UUID.randomUUID()}.jpg")
+//
+//    imageRef.putFile(uri)
+//        .addOnSuccessListener {
+//            imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
+//                onComplete(downloadUri.toString())
+//            }.addOnFailureListener {
+//                onComplete(null)
+//            }
+//        }
+//        .addOnFailureListener {
+//            onComplete(null)
+//        }
+//}

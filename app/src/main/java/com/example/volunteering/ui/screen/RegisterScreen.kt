@@ -38,15 +38,10 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
 
     val error = viewModel.errorMessage.value
 
-    val primaryColor = Color(0xFF445E91)
-    val lightGrayBackground = Color(0xFFF8F9FA)
-
-
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(lightGrayBackground)
+            .background(MaterialTheme.colorScheme.background)
 
     ) {
         Column(
@@ -60,7 +55,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
             Text("Create Account",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
-                color = primaryColor
+                color = MaterialTheme.colorScheme.primary
             )
 
             Spacer(modifier = Modifier.height(18.dp))
@@ -70,7 +65,7 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                     .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(
                     modifier = Modifier.padding(24.dp),
@@ -151,7 +146,8 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary)
             ) {
                 Text("Register", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
@@ -163,11 +159,11 @@ fun RegisterScreen(navController: NavController, viewModel: AuthViewModel = view
                 Text(
                     text = "Have an account?",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(
                     onClick = { navController.navigate("login") }
                 ) {
-                    Text("Log in", fontWeight = FontWeight.Bold, color = primaryColor)
+                    Text("Log in", fontWeight = FontWeight.Bold, color =  MaterialTheme.colorScheme.primary)
                 }
             }
         }

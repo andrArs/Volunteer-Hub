@@ -114,7 +114,12 @@ fun EventDetailsScreen(navController: NavHostController, eventId: String) {
                 IconButton(onClick = { navController.popBackStack() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                 }
-            }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+            )
         )
 
         when {
@@ -274,7 +279,7 @@ private fun EventDetailsContent(
                 Text(
                     text = "${event.type}",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                 )
             }
@@ -381,7 +386,8 @@ private fun EventDetailsContent(
                             containerColor = if (isInterested)
                                 MaterialTheme.colorScheme.secondaryContainer
                             else
-                                MaterialTheme.colorScheme.surface
+                                MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface
                         )
                     ) {
                         Icon(
@@ -398,10 +404,15 @@ private fun EventDetailsContent(
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isGoing)
-                                Color(0xFF445E91)
+                                MaterialTheme.colorScheme.primary
                             else
-                                Color(0xFF494C4F)
+                                MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = if (isGoing)
+                                MaterialTheme.colorScheme.onPrimary
+                            else
+                                MaterialTheme.colorScheme.onSurface
                         )
+
                     ) {
                         Icon(
                             imageVector = if (isGoing) Icons.Default.Check else Icons.Default.Add,

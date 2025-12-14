@@ -36,8 +36,8 @@ import java.time.temporal.ChronoUnit
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyProfileScreen(navController: NavController) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val lightGrayBackground = Color(0xFFF8F9FA)
+//    val primaryColor = MaterialTheme.colorScheme.primary
+//    val lightGrayBackground = Color(0xFFF8F9FA)
     val darkBlueLogout = Color(0xFF0D47A1)
 
     val scope = rememberCoroutineScope()
@@ -123,7 +123,7 @@ fun MyProfileScreen(navController: NavController) {
     }
 
     Scaffold(
-        containerColor = lightGrayBackground,
+        containerColor =  MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
@@ -142,8 +142,8 @@ fun MyProfileScreen(navController: NavController) {
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    titleContentColor = primaryColor,
-                    navigationIconContentColor = primaryColor
+                    titleContentColor =  MaterialTheme.colorScheme.primary,
+                    navigationIconContentColor =  MaterialTheme.colorScheme.primary
                 )
             )
         }
@@ -194,7 +194,6 @@ fun MyProfileScreen(navController: NavController) {
                         StatItem(
                             count = eventsAttended,
                             label = "Events\nAttended",
-                            color = primaryColor,
                             modifier = Modifier.weight(1f)
                         )
                         VerticalDivider(
@@ -202,12 +201,11 @@ fun MyProfileScreen(navController: NavController) {
                                 .height(50.dp)
                                 .padding(vertical = 8.dp),
                             thickness = 1.dp,
-                            color = Color.LightGray
+                            color = MaterialTheme.colorScheme.outlineVariant
                         )
                         StatItem(
                             count = eventsOrganized,
                             label = "Events\nOrganized",
-                            color = primaryColor,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -221,7 +219,7 @@ fun MyProfileScreen(navController: NavController) {
                             text = "Upcoming Event Reminders",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black,
+                            color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
                         )
                         Divider(modifier = Modifier.padding(vertical = 12.dp, horizontal = 16.dp))
@@ -230,7 +228,7 @@ fun MyProfileScreen(navController: NavController) {
                             Text(
                                 text = "No upcoming events scheduled.",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray,
+                                color =  MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier
                                     .padding(16.dp)
                                     .align(Alignment.CenterHorizontally)
@@ -240,7 +238,6 @@ fun MyProfileScreen(navController: NavController) {
                                 EventReminderRow(
                                     eventName = event.title,
                                     eventDate = "${event.date} at ${event.time}",
-                                    color = primaryColor,
                                     event = event
                                 )
                                 if (index < upcomingEvents.lastIndex) {
@@ -287,7 +284,7 @@ fun ProfileSectionCard(content: @Composable ColumnScope.() -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         content = content
     )
 }
@@ -311,7 +308,7 @@ fun InfoRow(icon: ImageVector, text: String, isPrimary: Boolean) {
             text = text,
             style = if (isPrimary) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
             fontWeight = if (isPrimary) FontWeight.Bold else FontWeight.Normal,
-            color = if (isPrimary) Color.Black else Color.Gray,
+            color = if (isPrimary) MaterialTheme.colorScheme.onSurface else  MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
@@ -319,7 +316,7 @@ fun InfoRow(icon: ImageVector, text: String, isPrimary: Boolean) {
 }
 
 @Composable
-fun StatItem(count: Int, label: String, color: Color, modifier: Modifier = Modifier) {
+fun StatItem(count: Int, label: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -329,19 +326,19 @@ fun StatItem(count: Int, label: String, color: Color, modifier: Modifier = Modif
             text = count.toString(),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = color
+            color = MaterialTheme.colorScheme.primary
         )
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
     }
 }
 
 @Composable
-fun EventReminderRow(eventName: String, eventDate: String, color: Color, event: Event? = null) {
+fun EventReminderRow(eventName: String, eventDate: String, event: Event? = null) {
     val daysUntil = event?.let { getDaysUntilEvent(it.date) }
 
     Row(
@@ -353,7 +350,7 @@ fun EventReminderRow(eventName: String, eventDate: String, color: Color, event: 
         Icon(
             imageVector = Icons.Filled.EventAvailable,
             contentDescription = "Event Reminder",
-            tint = color,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(32.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
@@ -362,14 +359,14 @@ fun EventReminderRow(eventName: String, eventDate: String, color: Color, event: 
                 text = eventName,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = eventDate,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 

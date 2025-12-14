@@ -27,13 +27,13 @@ import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun HomeScreen(navController: NavHostController) {
-    val primaryColor = Color(0xFF445E91)
-    val lightGrayBackground = Color(0xFFF8F9FA)
-    val darkBlueLogout = Color(0xFF0D47A1)
+//    val primaryColor = Color(0xFF445E91)
+//    val lightGrayBackground = Color(0xFFF8F9FA)
+//    val darkBlueLogout = Color(0xFF0D47A1)
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(lightGrayBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
 
         Box(
@@ -43,9 +43,14 @@ fun HomeScreen(navController: NavHostController) {
                 .clip(RoundedCornerShape(bottomStartPercent = 20, bottomEndPercent = 20))
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(primaryColor, primaryColor.copy(alpha = 0.8f))
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.80f)
+                        )
                     )
+
                 )
+
         )
         Column(
             modifier = Modifier
@@ -58,7 +63,7 @@ fun HomeScreen(navController: NavHostController) {
                 text = "Welcome to \nVolunteer Hub",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 32.dp),
             )
@@ -75,7 +80,6 @@ fun HomeScreen(navController: NavHostController) {
                     DashboardCardElevated(
                         icon = Icons.Filled.Event,
                         title = "My Events",
-                        color = primaryColor,
                         onClick = { navController.navigate("my_events") }
                     )
                 }
@@ -83,7 +87,6 @@ fun HomeScreen(navController: NavHostController) {
                     DashboardCardElevated(
                         icon = Icons.Filled.Search,
                         title = "View Events",
-                        color = primaryColor,
                         onClick = { navController.navigate("view_events") }
                     )
                 }
@@ -91,7 +94,6 @@ fun HomeScreen(navController: NavHostController) {
                     DashboardCardElevated(
                         icon = Icons.Filled.AddCircleOutline,
                         title = "Create Event",
-                        color = primaryColor,
                         onClick = { navController.navigate("create_event") }
                     )
                 }
@@ -99,7 +101,6 @@ fun HomeScreen(navController: NavHostController) {
                     DashboardCardElevated(
                         icon = Icons.Filled.Person,
                         title = "My Profile",
-                        color = primaryColor,
                         onClick = { navController.navigate("my_profile") }
                     )
                 }
@@ -118,8 +119,8 @@ fun HomeScreen(navController: NavHostController) {
                     .width(250.dp)
                     .height(50.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = darkBlueLogout),
-                border = BorderStroke(1.5.dp, darkBlueLogout)
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
             ) {
                 Text("Logout", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
@@ -131,7 +132,6 @@ fun HomeScreen(navController: NavHostController) {
 fun DashboardCardElevated(
     icon: ImageVector,
     title: String,
-    color: Color,
     onClick: () -> Unit
 ) {
     Card(
@@ -141,7 +141,7 @@ fun DashboardCardElevated(
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
@@ -153,7 +153,7 @@ fun DashboardCardElevated(
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                tint = color,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(44.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -161,7 +161,7 @@ fun DashboardCardElevated(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = color,
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
         }
