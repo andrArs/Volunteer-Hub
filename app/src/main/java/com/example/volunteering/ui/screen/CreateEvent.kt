@@ -62,25 +62,6 @@ fun CreateEventScreen(navController: NavHostController) {
     var type by remember { mutableStateOf("") }
     var showTypeMenu by remember { mutableStateOf(false) }
     var location by remember { mutableStateOf("") }
-//    var imageUrl by remember { mutableStateOf("") }
-//    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-//    var isUploadingImage by remember { mutableStateOf(false) }
-
-//    val imagePickerLauncher = rememberLauncherForActivityResult(
-//        contract = ActivityResultContracts.GetContent()
-//    ) { uri: Uri? ->
-//        uri?.let {
-//            selectedImageUri = it
-//            isUploadingImage = true
-//            uploadImageToFirebase(it) { downloadUrl ->
-//                imageUrl = downloadUrl ?: ""
-//                isUploadingImage = false
-//                if (downloadUrl == null) {
-//                    var errorMessage = "Failed to upload image"
-//                }
-//            }
-//        }
-//    }
     var errorMessage by remember { mutableStateOf("") }
 
     val calendar = Calendar.getInstance()
@@ -379,49 +360,6 @@ fun CreateEventScreen(navController: NavHostController) {
                 placeholder = { Text("Leave empty for unlimited") }
             )
 
-//            Column(modifier = Modifier.fillMaxWidth()) {
-//
-//
-//                if (selectedImageUri != null) {
-//                    Card(
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .height(200.dp),
-//                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-//                    ) {
-//                        Box(modifier = Modifier.fillMaxSize()) {
-//                            AsyncImage(
-//                                model = selectedImageUri,
-//                                contentDescription = "Selected image",
-//                                modifier = Modifier.fillMaxSize(),
-//                                contentScale = ContentScale.Crop
-//                            )
-//                            if (isUploadingImage) {
-//                                Box(
-//                                    modifier = Modifier
-//                                        .fillMaxSize()
-//                                        .background(Color.Black.copy(alpha = 0.5f)),
-//                                    contentAlignment = Alignment.Center
-//                                ) {
-//                                    CircularProgressIndicator(color = Color.White)
-//                                }
-//                            }
-//                        }
-//                    }
-//                    Spacer(modifier = Modifier.height(8.dp))
-//                }
-//
-//                OutlinedButton(
-//                    onClick = { imagePickerLauncher.launch("image/*") },
-//                    modifier = Modifier.fillMaxWidth(),
-//                    enabled = !isUploadingImage,
-//                    shape = RoundedCornerShape(4.dp)
-//                ) {
-//                    Icon(Icons.Default.Add, contentDescription = null)
-//                    Spacer(modifier = Modifier.width(8.dp))
-//                    Text(if (selectedImageUri != null) "Change Image" else "Upload Image")
-//                }
-//            }
 
             if (errorMessage.isNotEmpty()) {
                 Card(
@@ -456,7 +394,7 @@ fun CreateEventScreen(navController: NavHostController) {
                     val isValid = when {
                         title.isBlank() || description.isBlank() || date.isBlank() || time.isBlank() ||
                                 type.isBlank() || location.isBlank() -> {
-                            errorMessage = "All fields except image and participants are required."
+                            errorMessage = "All fields except participants are required."
                             false
                         }
                         eventDate == null || eventDate.isBefore(today) -> {
@@ -502,7 +440,6 @@ fun CreateEventScreen(navController: NavHostController) {
                             location = location,
                             latitude = latitude,
                             longitude = longitude,
-//                            imageUrl = imageUrl,
                             creatorUid = uid
                         )
                         repository.createEvent(event) { success ->
@@ -515,15 +452,6 @@ fun CreateEventScreen(navController: NavHostController) {
                     .fillMaxWidth()
                     .height(56.dp)
             ) {
-//                if (isUploadingImage) {
-//                    CircularProgressIndicator(
-//                        modifier = Modifier.size(24.dp),
-//                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-//                        strokeWidth = 2.dp
-//                    )
-//                    Spacer(modifier = Modifier.width(8.dp))
-//                    Text("Wait, uploading image...")
-//                } else {  }
                     Text(
                         text = "Create Event",
                         style = MaterialTheme.typography.titleMedium,
@@ -536,21 +464,3 @@ fun CreateEventScreen(navController: NavHostController) {
         }
     }
 }
-
-//fun uploadImageToFirebase(uri: Uri, onComplete: (String?) -> Unit) {
-//    val storage = FirebaseStorage.getInstance()
-//    val storageRef = storage.reference
-//    val imageRef = storageRef.child("event_images/${UUID.randomUUID()}.jpg")
-//
-//    imageRef.putFile(uri)
-//        .addOnSuccessListener {
-//            imageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-//                onComplete(downloadUri.toString())
-//            }.addOnFailureListener {
-//                onComplete(null)
-//            }
-//        }
-//        .addOnFailureListener {
-//            onComplete(null)
-//        }
-//}

@@ -39,7 +39,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3" // sau versiunea compatibilă cu Compose BOM
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
 
 }

@@ -45,7 +45,6 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
     var participants by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
-//    var imageUrl by remember { mutableStateOf("") }
     var creatorUid by remember { mutableStateOf<String?>(null) }
     var showTypeMenu by remember { mutableStateOf(false) }
 
@@ -79,7 +78,6 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
                 location = event.location
                 latitude = event.latitude
                 longitude = event.longitude
-//                imageUrl = event.imageUrl
                 creatorUid = event.creatorUid
             } else {
                 errorMessage = "Event not found."
@@ -363,13 +361,6 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
                     placeholder = { Text("Leave empty for unlimited") }
                 )
 
-//                OutlinedTextField(
-//                    value = imageUrl,
-//                    onValueChange = { imageUrl = it },
-//                    label = { Text("Image URL (Optional)") },
-//                    modifier = Modifier.fillMaxWidth(),
-//                    singleLine = true
-//                )
 
                 if (errorMessage.isNotEmpty()) {
                     Card(
@@ -413,7 +404,7 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
                         val isValid = when {
                             title.isBlank() || description.isBlank() || date.isBlank() || time.isBlank() ||
                                     type.isBlank() || location.isBlank() -> {
-                                errorMessage = "All fields except image and participants are required."
+                                errorMessage = "All fields except participants are required."
                                 false
                             }
                             eventDate == null || eventDate.isBefore(today) -> {
@@ -455,7 +446,6 @@ fun EditEventScreen(navController: NavHostController, eventId: String) {
                                 location = location,
                                 latitude = latitude,
                                 longitude = longitude,
-//                                imageUrl = imageUrl,
                                 creatorUid = creatorUid!!
                             )
 

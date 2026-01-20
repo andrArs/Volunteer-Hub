@@ -231,38 +231,7 @@ private fun EventDetailsContent(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        if (event.imageUrl.isNotEmpty()) {
-            AsyncImage(
-                model = event.imageUrl,
-                contentDescription = "Event image",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp)
-                    .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
-                    .background(Color.LightGray),
-                contentScale = ContentScale.Crop,
-                onError = { state ->
-                    Log.e("AsyncImageError", "Error loading image: ${state.result.throwable}")
-                },
-            )
-        }
-//        else {
-//            Box(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .height(250.dp)
-//                    .background(MaterialTheme.colorScheme.surfaceVariant)
-//                    .clip(RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Default.Image,
-//                    contentDescription = null,
-//                    modifier = Modifier.size(80.dp),
-//                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-//                )
-//            }
-//        }
+
 
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
